@@ -40,16 +40,10 @@ final class EsendexTransportFactory extends AbstractTransportFactory
             throw new IncompleteDsnException('Missing accountreference.', $dsn->getOriginalDsn());
         }
 
-        $from = $dsn->getOption('from');
-
-        if (!$from) {
-            throw new IncompleteDsnException('Missing from.', $dsn->getOriginalDsn());
-        }
-
         $host = 'default' === $dsn->getHost() ? null : $dsn->getHost();
         $port = $dsn->getPort();
 
-        return (new EsendexTransport($token, $accountReference, $from, $this->client, $this->dispatcher))->setHost($host)->setPort($port);
+        return (new EsendexTransport($token, $accountReference, $this->client, $this->dispatcher))->setHost($host)->setPort($port);
     }
 
     protected function getSupportedSchemes(): array
