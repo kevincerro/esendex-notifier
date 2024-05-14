@@ -17,7 +17,7 @@ use Symfony\Component\Notifier\Exception\LogicException;
 use Symfony\Component\Notifier\Exception\TransportException;
 use Symfony\Component\Notifier\Message\MessageInterface;
 use Symfony\Component\Notifier\Message\SentMessage;
-use Symfony\Component\Notifier\Message\SmsMessage;
+use App\Model\CustomSmsMessage;
 use Symfony\Component\Notifier\Transport\AbstractTransport;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -31,13 +31,11 @@ final class EsendexTransport extends AbstractTransport
 
     private $token;
     private $accountReference;
-    private $from;
 
-    public function __construct(string $token, string $accountReference, string $from, HttpClientInterface $client = null, EventDispatcherInterface $dispatcher = null)
+    public function __construct(string $token, string $accountReference, HttpClientInterface $client = null, EventDispatcherInterface $dispatcher = null)
     {
         $this->token = $token;
         $this->accountReference = $accountReference;
-        $this->from = $from;
 
         parent::__construct($client, $dispatcher);
     }
@@ -49,23 +47,20 @@ final class EsendexTransport extends AbstractTransport
 
     public function supports(MessageInterface $message): bool
     {
-        return $message instanceof SmsMessage;
+        return $message instanceof CustomSmsMessage;
     }
 
     protected function doSend(MessageInterface $message): SentMessage
     {
-        if (!$message instanceof SmsMessage) {
-            throw new LogicException(sprintf('The "%s" transport only supports instances of "%s" (instance of "%s" given).', __CLASS__, SmsMessage::class, get_debug_type($message)));
+        if (!$message instanceof CustomSmsMessage) {
+            throw new LogicException(sprintf('The "%s" transport only supports instances of "%s" (instance of "%s" given).', __CLASS__, CustomSmsMessage::class, get_debug_type($message)));
         }
 
         $messageData = [
             'to' => $message->getPhone(),
             'body' => $message->getSubject(),
+            'from' => $message->getFrom(),
         ];
-
-        if (null !== $this->from) {
-            $messageData['from'] = $this->from;
-        }
 
         $response = $this->client->request('POST', 'https://'.$this->getEndpoint().'/v1.0/messagedispatcher', [
             'auth_basic' => $this->token,
